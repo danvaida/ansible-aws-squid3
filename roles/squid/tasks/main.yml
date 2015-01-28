@@ -1,0 +1,10 @@
+---
+
+- name: updating APT cache and installing squid3
+  apt: name=squid3 state=latest update_cache=yes
+  tags: squid
+
+- name: setting up the squid3 configuration file
+  template: src=squid.conf.j2 dest=/etc/squid3/squid.conf owner=root group=root
+  notify: restart squid3 
+  tags: squid

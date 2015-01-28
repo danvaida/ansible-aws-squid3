@@ -1,0 +1,12 @@
+#AWS Credentials
+ec2_access_key: 
+ec2_secret_key: 
+
+#AWS Vars
+region: eu-central-1
+zone: eu-central-1a
+instance_type: t2.micro
+ami: ami-86a9999b
+
+#Custom Vars
+office_ip: xxx.xxx.xxx.xxx/32

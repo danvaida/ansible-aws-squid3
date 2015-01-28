@@ -1,0 +1,91 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    
+  - name: whoami
+    command: whoami
+    register: whoami
+
+
+  - name: generating a new SSH key for the current user
+    user: name={{ whoami.stdout }} generate_ssh_key=yes ssh_key_bits=2048 ssh_key_file=.ssh/squid_key_rsa
+    register: user
+ 
+
+  - name: creating the EC2 keypair
+    local_action:
+      module: ec2_key
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      name: squid3_key
+      region: "{{ region }}"
+      key_material: "{{ item }}"
+    with_file: /home/{{ whoami.stdout }}/.ssh/squid_key_rsa.pub
+    register: key
+
+
+  - name: spinning up the Squid3 instance
+    local_action:
+      module: ec2 
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      count: 1
+      region: "{{ region }}"
+      zone: "{{ zone }}"
+      instance_type: "{{ instance_type }}"
+      image: "{{ ami }}"
+      state: present
+      group_id: 
+        - "{{ office_ssh_sg_creation.group_id }}"
+        - "{{ squid_sg_creation.group_id }}"
+      vpc_subnet_id: "{{ vpc.subnets[0].id }}"
+      key_name: squid3_key
+      wait: yes
+      wait_timeout: 300
+    register: ec2
+
+  
+  - name: adding EIP to the instance
+    local_action: 
+      module: ec2_eip
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      in_vpc: yes 
+      instance_id: "{{ item.id }}"
+      region: "{{ region }}"
+    with_items: ec2.instances
+    register: eip
+
+
+  - name: adding instance to host group
+    local_action:
+      module: add_host
+      aws_access_key: "{{ ec2_access_key }}"
+      aws_secret_key: "{{ ec2_secret_key }}"
+      name: "{{ item.public_ip }}"
+      groups: squid_host
+      ansible_ssh_user: admin
+      ansible_ssh_private_key_file: /home/{{ whoami.stdout }}/.ssh/squid_key_rsa
+    with_items: eip.results 
+
+  - name: tagging instance
+    local_action: ec2_tag aws_access_key="{{ ec2_access_key }}" aws_secret_key="{{ ec2_secret_key }}" resource="{{ item.id }}" region="{{ region }}" state=present
+    args:
+      tags:
+        Name: Squid3
+        Purpose: Proxy
+    with_items: ec2.instances
+    register: tagging
+
+
+  - name: adding instances to local host group
+    local_action: lineinfile dest=hosts regexp="{{ item.public_ip }}" insertafter="[squid]" line="{{ item.public_ip }} ansible_ssh_private_key_file=/home/{{ whoami.stdout }}/.ssh/squid_key_rsa"
+    with_items: eip.results
+
+  - name: waiting for the instances to start
+    local_action: wait_for state=started host={{ item.public_ip }} port=22
+    with_items: eip.results
+
+- include: squid.yml

@@ -1,0 +1,23 @@
+acl LAN src 10.0.0.0/24
+acl office src {{ office }}
+http_access allow LAN
+http_access allow office
+http_access deny all
+icp_access allow LAN
+icp_access allow office
+icp_access deny all
+acl SSL_ports port 8081 8443 8834
+acl Safe_ports port 8081 8443 8834
+http_port 3128
+cache_mem 128 MB
+maximum_object_size_in_memory 128 KB
+cache_replacement_policy heap GDSF
+maximum_object_size 4 MB
+cache_swap_low 85
+cache_swap_high 90
+access_log /var/log/squid3/access.log squid
+half_closed_clients off
+cache_mgr it@scarosso.com
+hosts_file /etc/hosts
+memory_pools off
+client_db off

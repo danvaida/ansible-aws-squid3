@@ -1,0 +1,7 @@
+---
+
+- hosts: squid:squid_host
+  remote_user: admin
+  sudo: yes  
+  roles:
+   - { role: squid, office: "{{ office_ip }}" }
