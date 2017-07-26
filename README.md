@@ -1,4 +1,4 @@
-#About
+# About
 
 With this collection of playbooks, you can set up your own Proxy server running Squid3 in AWS.
 
@@ -12,7 +12,7 @@ The playbook has a task that creates the SSH Key Pair in your .ssh folder and up
 
 Much is left to be desired, but then again, this whole thing is more of a proof of concept. If I'll get the time one day, I might dump the waterfall-like inclusions and go for something smarter.
 
-#Tools used
+# Tools used
 
 ```
 ansible --version                                                                      
@@ -37,10 +37,9 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> 
 ```
 
-#Running it
+# Running it
 
-Variables are found under:
-group_vars/all/vars.yml
+Variables are found under: `group_vars/all/vars.yml`
 
 Make sure you put in your AWS Credentials, and modify the other variables according to your needs.
 The 'office-ip' variable is supposed to take your public IP address.
@@ -115,7 +114,7 @@ PLAY RECAP ********************************************************************
 localhost                  : ok=12   changed=7    unreachable=0    failed=0
 ```
 
-Subsequent runs of squid.yml (because for example, you already have the instance ready):
+Subsequent runs of `squid.yml` (because for example, you already have the instance ready):
 
 ```
 [dvaida@scat ansible-squid3]$ ansible-playbook squid.yml 
@@ -134,3 +133,7 @@ ok: [54.93.90.117]
 PLAY RECAP ******************************************************************** 
 54.93.90.117               : ok=3    changed=0    unreachable=0    failed=0
 ```
+
+# License
+
+This project is licensed under the terms of the GNU GPL v3.0 license.
